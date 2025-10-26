@@ -1,0 +1,45 @@
+import cv2
+from google.colab.patches import cv2_imshow
+import numpy as np
+
+# Load the image in grayscale
+image_path = '/content/Star.jpg'  # Replace with your image path
+image = cv2.imread(image_path, cv2.IMREAD_GRAYSCALE)
+
+# --- Edge Detection ---
+edges = cv2.Canny(image, 50, 150)
+cv2_imshow(edges)
+cv2.waitKey(0)
+cv2.destroyAllWindows()
+
+# --- Corner Detection ---
+corners = cv2.goodFeaturesToTrack(image, 25, 0.01, 10)
+if corners is not None:
+    corners = np.int0(corners)
+    for corner in corners:
+        x, y = corner.ravel()
+        cv2.circle(image, (x, y), 3, 255, -1)
+
+cv2_imshow(image)
+cv2.waitKey(0)
+cv2.destroyAllWindows()
+
+# --- Line Detection (Hough Transform) ---
+edges = cv2.Canny(image, 50, 150, apertureSize=3)
+lines = cv2.HoughLines(edges, 1, np.pi / 180, 200)
+
+if lines is not None:
+    for rho, theta in lines[:, 0]:
+        a = np.cos(theta)
+        b = np.sin(theta)
+        x0 = a * rho
+        y0 = b * rho
+        x1 = int(x0 + 1000 * (-b))
+        y1 = int(y0 + 1000 * (a))
+        x2 = int(x0 - 1000 * (-b))
+        y2 = int(y0 - 1000 * (a))
+        cv2.line(image, (x1, y1), (x2, y2), (0, 0, 255), 2)
+
+cv2_imshow(image)
+cv2.waitKey(0)
+cv2.destroyAllWindows()
