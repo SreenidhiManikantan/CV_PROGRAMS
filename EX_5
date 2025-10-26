@@ -1,0 +1,29 @@
+!pip install opencv-python
+!pip install dlib
+
+import cv2
+import dlib
+from google.colab.patches import cv2_imshow
+
+# Load the face detector
+detector = dlib.get_frontal_face_detector()
+
+# Load the image
+image = cv2.imread('/content/imge 1 (1).jpg')
+
+# Convert to grayscale
+gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+
+# Detect faces
+faces = detector(gray)
+
+# Iterate over detected faces
+for face in faces:
+    x1, y1, x2, y2 = face.left(), face.top(), face.right(), face.bottom()
+    cv2.rectangle(image, (x1, y1), (x2, y2), (0, 255, 0), 2)
+
+# Display the image
+cv2_imshow(image)
+cv2.waitKey(0)
+cv2.destroyAllWindows()
+
