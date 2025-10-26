@@ -1,0 +1,55 @@
+!pip install tensorflow opencv-python
+
+import tensorflow as tf
+import cv2
+import numpy as np
+import matplotlib.pyplot as plt
+
+# Load the pre-trained DenseNet121 model (example; replace with segmentation model if needed)
+model = tf.keras.applications.DenseNet121(weights="imagenet")
+
+def preprocess_image(image):
+    """Preprocess the image for the model"""
+    image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+    image = cv2.resize(image, (224, 224))
+    image = np.expand_dims(image, axis=0)
+    image = tf.keras.applications.densenet.preprocess_input(image)
+    return image
+
+def run_inference(model, image):
+    """Run inference on the image using the model"""
+    preprocessed_image = preprocess_image(image)
+    prediction = model.predict(preprocessed_image)
+    return prediction
+
+def postprocess_prediction(prediction, original_image):
+    """Post-process the prediction to visualize road structure"""
+    prediction = np.squeeze(prediction)
+    prediction = cv2.resize(prediction, (original_image.shape[1], original_image.shape[0]))
+    return prediction
+
+def visualize_segmentation(image, segmentation):
+    """Visualize the segmentation map over the image"""
+    # Convert the segmentation to uint8 before applying colormap
+    segmentation = (segmentation * 255).astype(np.uint8)  # Scale and convert to uint8
+    seg_image = cv2.applyColorMap(segmentation, cv2.COLORMAP_JET)
+    overlay = cv2.addWeighted(image, 0.5, seg_image, 0.5, 0)
+    return overlay
+
+# Load an example image
+image = cv2.imread('/content/Road1.jpg')
+
+# Run the segmentation model
+prediction = run_inference(model, image)
+
+# Post-process the prediction
+segmentation = postprocess_prediction(prediction, image)
+
+# Visualize the segmentation
+result = visualize_segmentation(image, segmentation)
+
+# Display the result
+plt.figure(figsize=(10, 10))
+plt.imshow(cv2.cvtColor(result, cv2.COLOR_BGR2RGB))
+plt.axis('off')
+plt.show()
