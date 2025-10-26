@@ -1,0 +1,9 @@
+import cv2 
+import numpy as np 
+from google.colab.patches import cv2_imshow 
+img = cv2.imread("/content/do_nawab-100x100.png",0) 
+equ = cv2.equalizeHist(img) 
+res = np.hstack((img, equ)) 
+cv2_imshow(res) 
+cv2.waitKey(0) 
+cv2.destroyAllWindows()
