@@ -1,0 +1,28 @@
+import cv2
+import numpy as np
+from tensorflow.keras.models import load_model
+from tensorflow.keras.preprocessing import image
+
+# Load pre-trained action recognition model
+action_model = load_model('/content/model.h5')  # Replace with your model path
+action_classes = ['walking', 'running', 'jumping', 'standing', 'sitting', 'falling', 'other']
+
+# Function to predict action for a single image
+def predict_action(img_path):
+    # Load and preprocess the image
+    img = image.load_img(img_path, target_size=(90, 90), color_mode='grayscale')  # Load as grayscale
+    img_array = image.img_to_array(img)
+    img_array = np.expand_dims(img_array, axis=0)  # Add batch dimension → (1, 90, 90, 1)
+    img_array = img_array / 255.0  # Normalize
+
+    # Predict action
+    prediction = action_model.predict(img_array)
+    action_label = action_classes[np.argmax(prediction)]
+
+    return action_label
+
+# Example usage: Predict action for a single image
+img_path = '/content/jump 4.jpg'  # Replace with your image path
+predicted_action = predict_action(img_path)
+
+print(f"Predicted Action: {predicted_action}")
