@@ -1,0 +1,39 @@
+import cv2
+import numpy as np
+from google.colab.patches import cv2_imshow
+
+def detect_and_label_objects(image_path, color_ranges, labels):
+    image = cv2.imread(image_path)
+    hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
+
+    for i, (lower, upper) in enumerate(zip(color_ranges[::2], color_ranges[1::2])):
+        mask = cv2.inRange(hsv, np.array(lower), np.array(upper))
+        contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+
+        for contour in contours:
+            x, y, w, h = cv2.boundingRect(contour)
+            cv2.rectangle(image, (x, y), (x + w, y + h), (0, 255, 0), 2)
+            cv2.putText(image, labels[i], (x, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
+
+            object_roi = image[y:y+h, x:x+w]
+            gray_object = cv2.cvtColor(object_roi, cv2.COLOR_BGR2GRAY)
+            _, binary_object = cv2.threshold(gray_object, 127, 255, cv2.THRESH_BINARY)
+
+            binary_label = np.zeros_like(image)
+            cv2.rectangle(binary_label, (x, y), (x + w, y + h), (255, 255, 255), -1)
+
+            cv2_imshow(binary_label)
+            print(f"Binary label for {labels[i]}:")
+
+    cv2_imshow(image)
+    cv2.waitKey(0)
+    cv2.destroyAllWindows()
+
+color_ranges = [
+    (0, 100, 100), (10, 255, 255),
+    (25, 100, 100), (35, 255, 255),
+    (100, 100, 100), (120, 255, 255)
+]
+labels = ["Red", "Yellow", "Blue"]
+
+detect_and_label_objects("/content/download.jpg", color_ranges, labels)
