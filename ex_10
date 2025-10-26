@@ -1,0 +1,60 @@
+import cv2
+import numpy as np
+from matplotlib import pyplot as plt
+
+# Load pre-trained face detection model
+face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
+
+# Load authorized face image
+authorized_face_img = cv2.imread('/content/Id.jpg', cv2.IMREAD_GRAYSCALE)  # Replace with your authorized face image path
+
+# Feature extraction using ORB
+orb = cv2.ORB_create()
+kp1, des1 = orb.detectAndCompute(authorized_face_img, None)
+
+if des1 is None:
+    print("Error: No features detected in authorized face image.")
+else:
+    authorized_img_with_keypoints = cv2.drawKeypoints(authorized_face_img, kp1, None, color=(0, 255, 0))
+    plt.figure(figsize=(8, 6))
+    plt.title('Authorized Face with Keypoints')
+    plt.imshow(cv2.cvtColor(authorized_img_with_keypoints, cv2.COLOR_BGR2RGB))
+    plt.show()
+
+# Function to check if a face matches the authorized face
+def is_authorized(image_path):
+    frame = cv2.imread(image_path)
+    gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+    faces = face_cascade.detectMultiScale(gray, 1.1, 4)
+
+    for (x, y, w, h) in faces:
+        face_roi = gray[y:y + h, x:x + w]
+        kp2, des2 = orb.detectAndCompute(face_roi, None)
+
+        if des2 is not None:
+            # Use Brute-Force Matcher
+            bf = cv2.BFMatcher(cv2.NORM_HAMMING, crossCheck=True)
+            matches = bf.match(des1, des2)
+            matches = sorted(matches, key=lambda x: x.distance)
+
+            # Debug: Show matches between the authorized face and detected face
+            match_img = cv2.drawMatches(authorized_face_img, kp1, face_roi, kp2, matches[:10], None, flags=2)
+            plt.figure(figsize=(10, 8))
+            plt.title('Matches Between Authorized Face and Detected Face')
+            plt.imshow(cv2.cvtColor(match_img, cv2.COLOR_BGR2RGB))
+            plt.show()
+
+            # Check if enough good matches are found
+            good_matches = [m for m in matches if m.distance < 50]  # Adjust threshold as needed
+            if len(good_matches) > 10:  # Adjust threshold as needed
+                return True
+    return False
+
+# Check if the provided image matches the authorized face
+test_image_path = '/content/Obama.jpg'  # Replace with your test image path
+is_match = is_authorized(test_image_path)
+
+if is_match:
+    print("Authorized")
+else:
+    print("Unauthorized")
